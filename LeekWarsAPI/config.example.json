@@ -1,0 +1,8 @@
+﻿{
+  "bot":
+  {
+    "url": "https://leekwars.com/api/",
+    "login": "login",
+    "pass": "pass"
+  }
+}
