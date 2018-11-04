@@ -32,6 +32,8 @@ namespace LeekWarsAPI
         
         protected Farmer player;
 
+        protected Garden garden;
+
         #endregion
 
         #region init
@@ -49,6 +51,7 @@ namespace LeekWarsAPI
             Client = new HttpClient(_handler);
             Cookies = new List<Cookie>();
             Data = new Dictionary<string, string>();
+            garden = new Garden();
         }        
 
         #endregion
@@ -255,7 +258,92 @@ namespace LeekWarsAPI
         }
 
         #endregion
-        
+
+        #region garden
+
+        public async Task<bool> GetGardenStats()
+        {
+            Uri url = new Uri(Url + "garden/get/" + Data["token"]);
+            try
+            {
+                Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                var authenticationResponse = await Client.GetStringAsync(url);
+                JObject json = JObject.Parse(authenticationResponse);
+                if (json.Root["success"].ToString() == "True")
+                {
+                    garden = new Garden
+                    {
+                        Fight = int.Parse(json.Root["garden"]["fights"].ToString()),
+                        Opponents = new List<Leek>()
+                    };
+                    Console.WriteLine("[GARDEN][STATS]: Success | " + garden.Fight.ToString() + " remaining fights");
+                    return true;
+                }
+                else
+                {
+                    Console.WriteLine("[GARDEN][STATS]: FAILED");
+                    return false;
+                }
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("[GARDEN][STATS]: FAILED");
+                return false;
+            }
+        }
+
+        public async Task<bool> GardenGetOpponents(int leekId)
+        {
+            Uri url = new Uri(Url + "garden/get-leek-opponents/" + player.Leeks[leekId].Id.ToString() + "/" + Data["token"]);
+            try
+            {
+                Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                var authenticationResponse = await Client.GetStringAsync(url);
+                JObject json = JObject.Parse(authenticationResponse);
+                if (json.Root["success"].ToString() == "True")
+                {
+                    var leeks = json.Root["opponents"].First;
+                    bool isEnd = false;
+                    garden.Opponents = new List<Leek>();
+                    while (!isEnd)
+                    {
+                        try
+                        {
+                            Leek leek = new Leek();
+                            leek.Id = int.Parse(leeks["id"].ToString());
+                            leek.Name = leeks["name"].ToString();
+                            leek.Level = int.Parse(leeks["level"].ToString());
+                            leek.Talent = int.Parse(leeks["talent"].ToString());
+                            garden.Opponents.Add(leek);
+                            leeks = leeks.Next;
+                        }
+                        catch (Exception e)
+                        {
+                            isEnd = true;
+                        }
+                    }
+                    
+                    Console.WriteLine("[GARDEN][OPPONENTS]: Success | Found: " + garden.Opponents.Count.ToString() + " opponents for " + player.Leeks[leekId].Name);
+                    foreach (var opponent in garden.Opponents)
+                    {
+                        Console.WriteLine("[GARDEN][OPPONENTS][LIST]: " + opponent.Name + " | level: " + opponent.Level + " | talent: " + opponent.Talent);
+                    }
+                    return true;
+                }
+                else
+                {
+                    Console.WriteLine("[GARDEN][OPPONENTS]: FAILED");
+                    return false;
+                }
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("[GARDEN][OPPONENTS]: FAILED");
+                return false;
+            }
+        }
+
+        #endregion
 
         
 

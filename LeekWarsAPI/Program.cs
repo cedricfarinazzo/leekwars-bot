@@ -43,6 +43,9 @@ namespace LeekWarsAPI
 
             await api.RegisterTounamentFarmer();
             await api.RegisterTounamentLeeks();
+
+            await api.GetGardenStats();
+            await api.GardenGetOpponents(0);
             
             bool disconnect = await api.Disconnect();
         }
