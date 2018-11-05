@@ -7,6 +7,7 @@ using System.Net.Configuration;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.Serialization.Formatters;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Win32.SafeHandles;
 using Newtonsoft.Json;
@@ -30,9 +31,9 @@ namespace LeekWarsAPI
         
         protected Dictionary<string, string> Data;
         
-        protected Farmer player;
+        public Farmer player;
 
-        protected Garden garden;
+        public Garden garden;
 
         #endregion
 
@@ -322,7 +323,7 @@ namespace LeekWarsAPI
                             isEnd = true;
                         }
                     }
-                    
+                    garden.GetWeakestOpponent();
                     Console.WriteLine("[GARDEN][OPPONENTS]: Success | Found: " + garden.Opponents.Count.ToString() + " opponents for " + player.Leeks[leekId].Name);
                     foreach (var opponent in garden.Opponents)
                     {
@@ -345,9 +346,179 @@ namespace LeekWarsAPI
 
         #endregion
 
-        
+        #region Fight
 
+        public async Task<int> FightGetLeekWinner(int fightId)
+        {
+            Uri url = new Uri(Url + "fight/get/" + fightId);
+            try
+            {
+                Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                var authenticationResponse = await Client.GetStringAsync(url);
+                JObject json = JObject.Parse(authenticationResponse);
+                if (json.Root["success"].ToString() == "True")
+                {
+                    int winner = int.Parse(json.Root["fight"]["winner"].ToString());
+                    if (winner == -1)
+                    {
+                        Thread.Sleep(2000);
+                        return await FightGetLeekWinner(fightId);
+                    }
+
+                    if (winner == 0)
+                    {
+                        Console.WriteLine("[FIGHT][WINNER]: draw | fight num " + fightId.ToString());
+                        return 0;
+                    }
+                    int winnerId = int.Parse(json.Root["fight"]["leeks" + winner.ToString()].First["id"].ToString());
+                    string winnerName = json.Root["fight"]["leeks" + winner.ToString()].First["name"].ToString();
+                    
+                    Console.WriteLine("[FIGHT][WINNER]: " + winnerName + " Won the fight num " + fightId.ToString());
+                    return winnerId;
+                }
+                else
+                {
+                    Console.WriteLine("[FIGHT][WINNER]: FAILED");
+                    return -1;
+                }
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("[FIGHT][WINNER]: FAILED");
+                return -1;
+            }
+        }
+
+        public async Task<int> FightLeekStartChallenge(int leekId, int ennemyleekId)
+        {
+            Uri url = new Uri(Url + "garden/start-solo-challenge/" + player.Leeks[leekId].Id.ToString() + "/" + ennemyleekId.ToString() + "/" + Data["token"]);
+            try
+            {
+                Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                var authenticationResponse = await Client.GetStringAsync(url);
+                JObject json = JObject.Parse(authenticationResponse);
+                if (json.Root["success"].ToString() == "True")
+                {
+                    int fightId = int.Parse(json.Root["fight"].ToString());
+                    
+                    Console.WriteLine("[FIGHT][CHALLENGE]: start challenge | fightId: " + fightId.ToString());
+                    return fightId;
+                }
+                else
+                {
+                    Console.WriteLine("[FIGHT][CHALLENGE]: FAILED");
+                    return -1;
+                }
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("[FIGHT][CHALLENGE]: FAILED");
+                return -1;
+            }
+        }
         
+        public async Task<int> FightLeekStartSolo(int leekId, int ennemyleekId)
+        {
+            Uri url = new Uri(Url + "garden/start-solo-fight/" + player.Leeks[leekId].Id.ToString() + "/" + ennemyleekId.ToString() + "/" + Data["token"]);
+            try
+            {
+                Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                var authenticationResponse = await Client.GetStringAsync(url);
+                JObject json = JObject.Parse(authenticationResponse);
+                if (json.Root["success"].ToString() == "True")
+                {
+                    int fightId = int.Parse(json.Root["fight"].ToString());
+                    
+                    Console.WriteLine("[FIGHT][SOLO]: start solo fight | fightId: " + fightId.ToString());
+                    return fightId;
+                }
+                else
+                {
+                    Console.WriteLine("[FIGHT][SOLO]: FAILED");
+                    return -1;
+                }
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("[FIGHT][SOLO]: FAILED");
+                return -1;
+            }
+        }
+
+
+        public async Task<bool> FightLeek(int leekId)
+        {
+            await GardenGetOpponents(leekId);
+            
+            Console.WriteLine("[FIGHT][SOLO]: Test Phase");
+            Console.WriteLine("[FIGHT][SOLO] ==================================");
+            int enemyLeekId = 0;
+            bool canWon = false;
+            for (; enemyLeekId < garden.Opponents.Count; enemyLeekId += 1)
+            {
+                int fightid = await FightLeekStartChallenge(leekId, garden.Opponents[enemyLeekId].Id);
+                Thread.Sleep(2000);
+                if (fightid != -1)
+                {
+                    int winner = await FightGetLeekWinner(fightid);
+                    if (winner == 0)
+                    {
+                        continue;
+                    }
+                    if (winner != -1)
+                    {
+                        canWon = winner == player.Leeks[leekId].Id;
+                        if (canWon)
+                        {break;}
+                    }
+                }
+            }
+
+            if (!canWon || enemyLeekId >= garden.Opponents.Count)
+            {
+                enemyLeekId = 0;
+            }
+            
+            Console.WriteLine("[FIGHT][SOLO]: best opponents: " + garden.Opponents[enemyLeekId].Name);
+            Console.WriteLine("[FIGHT][SOLO]: Fight Phase");
+            Console.WriteLine("[FIGHT][SOLO] ==================================");
+            int fightSoloid = await FightLeekStartSolo(leekId, garden.Opponents[enemyLeekId].Id);
+            Thread.Sleep(2000);
+            if (fightSoloid != -1)
+            {
+                int winner = await FightGetLeekWinner(fightSoloid);
+                if (winner != -1)
+                {
+                    if (winner == player.Leeks[leekId].Id)
+                    {
+                        Console.WriteLine("[FIGHT][SOLO][RESULT]: " + player.Leeks[leekId].Name + " won against " + garden.Opponents[enemyLeekId].Name);
+                        return true;
+                    }
+                    else if (winner == 0)
+                    {
+                        Console.WriteLine("[FIGHT][SOLO][RESULT]: draw " + player.Leeks[leekId].Name + " against " + garden.Opponents[enemyLeekId].Name);
+                        return true;
+                    }
+                    else
+                    {
+                        Console.WriteLine("[FIGHT][SOLO][RESULT]: " + player.Leeks[leekId].Name + " lost against " + garden.Opponents[enemyLeekId].Name);
+                        return false;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("[FIGHT][SOLO][RESULT]: cannot load fight log | fight id: " + fightSoloid);
+                    return false;
+                }
+            }
+            else
+            {
+                Console.WriteLine("[FIGHT][SOLO][RESULT]: cannot start solo fight");
+                return false;
+            }
+            
+        }
         
+        #endregion
     }
 }

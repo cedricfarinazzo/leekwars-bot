@@ -2,6 +2,7 @@
 using System.IO;
 using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -44,10 +45,58 @@ namespace LeekWarsAPI
             await api.RegisterTounamentFarmer();
             await api.RegisterTounamentLeeks();
 
-            await api.GetGardenStats();
-            await api.GardenGetOpponents(0);
+            Console.WriteLine("\n\n");
             
+            await api.GetGardenStats();
+            
+            Console.WriteLine("\n\n=======");
+            Console.WriteLine("Your leeks: ");
+            for (int i = 0; i < api.player.Leeks.Count; i++)
+            {
+                Console.WriteLine("[" + i.ToString() + "]: " + api.player.Leeks[i].Name
+                                  + " | level: " + api.player.Leeks[i].Level.ToString() 
+                                  + " | talent: " + api.player.Leeks[i].Talent);
+            }
+
+            int leekId = -1;
+            while (leekId < 0 || leekId > api.player.Leeks.Count)
+            {
+                Console.Write("Leek number: ");
+                leekId = Readint();
+            }
+            
+            Console.WriteLine("\n=======");
+            int numberFight = -1;
+            while (numberFight < 0 || numberFight >= api.garden.Fight)
+            {
+                Console.Write("How many fight ? ");
+                numberFight = Readint();
+            }
+            Console.WriteLine("\n\n=======\n\n");
+
+            while (numberFight > 0)
+            {
+                await api.FightLeek(leekId);
+                --numberFight;
+            }
+            
+            Console.WriteLine("\n\n");
             bool disconnect = await api.Disconnect();
+        }
+
+        public static int Readint()
+        {
+            string input = "";
+            while ((input = Console.ReadLine()) == "");
+
+            try
+            {
+                return int.Parse(input);
+            }
+            catch (Exception)
+            {
+                return Readint();
+            }
         }
     }
 }

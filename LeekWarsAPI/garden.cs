@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace LeekWarsAPI
 {
@@ -9,5 +11,11 @@ namespace LeekWarsAPI
         
         public Garden()
         {}
+
+        public Leek GetWeakestOpponent()
+        {
+            Opponents = Opponents.OrderBy(o => o.Level).ThenBy(o => o.Talent).ToList();
+            return Opponents[0];
+        }
     }
 }
