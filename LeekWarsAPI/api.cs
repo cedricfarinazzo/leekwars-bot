@@ -491,17 +491,23 @@ namespace LeekWarsAPI
                 {
                     if (winner == player.Leeks[leekId].Id)
                     {
+                        Console.ForegroundColor = ConsoleColor.Green;
                         Console.WriteLine("[FIGHT][SOLO][RESULT]: " + player.Leeks[leekId].Name + " won against " + garden.Opponents[enemyLeekId].Name);
+                        Console.ResetColor();
                         return true;
                     }
                     else if (winner == 0)
                     {
+                        Console.ForegroundColor = ConsoleColor.White;
                         Console.WriteLine("[FIGHT][SOLO][RESULT]: draw " + player.Leeks[leekId].Name + " against " + garden.Opponents[enemyLeekId].Name);
+                        Console.ResetColor();
                         return true;
                     }
                     else
                     {
+                        Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine("[FIGHT][SOLO][RESULT]: " + player.Leeks[leekId].Name + " lost against " + garden.Opponents[enemyLeekId].Name);
+                        Console.ResetColor();
                         return false;
                     }
                 }
