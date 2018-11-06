@@ -3,7 +3,7 @@ solution: LeekWarsAPI/LeekWarsAPI.sln
 mono:
   - latest
 install:
-  - nuget LeekWarsAPI/LeekWarsAPI.sln
+  - nuget restore LeekWarsAPI/LeekWarsAPI.sln
 script:    
   - echo "Build Test"
   - make
