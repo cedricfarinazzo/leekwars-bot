@@ -397,6 +397,7 @@ namespace LeekWarsAPI
                 Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 var authenticationResponse = await Client.GetStringAsync(url);
                 JObject json = JObject.Parse(authenticationResponse);
+                Cooldown();
                 if (json.Root["success"].ToString() == "True")
                 {
                     int fightId = int.Parse(json.Root["fight"].ToString());
@@ -425,6 +426,7 @@ namespace LeekWarsAPI
                 Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 var authenticationResponse = await Client.GetStringAsync(url);
                 JObject json = JObject.Parse(authenticationResponse);
+                Cooldown();
                 if (json.Root["success"].ToString() == "True")
                 {
                     int fightId = int.Parse(json.Root["fight"].ToString());
@@ -478,7 +480,8 @@ namespace LeekWarsAPI
             {
                 enemyLeekId = 0;
             }
-            
+
+            Cooldown();
             Console.WriteLine("[FIGHT][SOLO]: best opponents: " + garden.Opponents[enemyLeekId].Name);
             Console.WriteLine("[FIGHT][SOLO]: Fight Phase");
             Console.WriteLine("[FIGHT][SOLO] ==================================");
@@ -522,7 +525,15 @@ namespace LeekWarsAPI
                 Console.WriteLine("[FIGHT][SOLO][RESULT]: cannot start solo fight");
                 return false;
             }
-            
+        }
+        
+        #endregion
+        
+        #region Cooldown
+
+        public static void Cooldown()
+        {
+            Thread.Sleep(15000);
         }
         
         #endregion

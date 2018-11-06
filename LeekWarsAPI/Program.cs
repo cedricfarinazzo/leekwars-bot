@@ -78,6 +78,7 @@ namespace LeekWarsAPI
             {
                 await api.FightLeek(leekId);
                 --numberFight;
+                Api.Cooldown();
                 Console.WriteLine("\n\n");
             }
             

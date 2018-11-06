@@ -14,7 +14,7 @@ namespace LeekWarsAPI
 
         public Leek GetWeakestOpponent()
         {
-            Opponents = Opponents.OrderBy(o => o.Level).ThenBy(o => o.Talent).ToList();
+            Opponents = Opponents.OrderBy(o => o.Talent).ThenBy(o => o.Level).ToList();
             return Opponents[0];
         }
     }
