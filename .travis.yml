@@ -1,9 +1,9 @@
 language: csharp
-solution: src/Epicoin/Epicoin.sln
+solution: LeekWarsAPI/LeekWarsAPI.sln
 mono:
   - latest
 install:
-  - nuget restore src/Epicoin/Epicoin.sln
+  - nuget LeekWarsAPI/LeekWarsAPI.sln
 script:    
   - echo "Build Test"
-  - make build
+  - make
