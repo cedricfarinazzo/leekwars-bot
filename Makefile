@@ -14,6 +14,7 @@ CP=cp -r
 all: build
 	
 build: $(BIN_DIR) restore
+	cp ${SRC_DIR}config.example.json ${SRC_DIR}config.json 
 	@cd ${SRC_DIR} && ${CC} ${CFLAGS} 
 	${CP} $(CURRENT_DIR)${SRC_DIR}bin/Release/* ${BIN_DIR}
 
